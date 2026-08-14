@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -13,6 +14,10 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+# Base directory relative to this script
+BASE_DIR = Path(__file__).resolve().parent
+IMAGE_PATH = BASE_DIR / "banner.jpg"
 
 # Text Messages
 WELCOME_TEXT = (
@@ -46,10 +51,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Insert user's name dynamically into the Thai promo text
     formatted_message = WELCOME_TEXT.format(user_name=user_name)
 
-    image_path = "banner.jpg"
-
-    if os.path.exists(image_path):
-        with open(image_path, "rb") as photo_file:
+    if IMAGE_PATH.is_file():
+        with open(IMAGE_PATH, "rb") as photo_file:
             await update.message.reply_photo(
                 photo=photo_file,
                 caption=formatted_message,
@@ -57,7 +60,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             )
     else:
         # Fallback to plain text if image file is missing
-        logger.warning(f"Image '{image_path}' not found. Sending text only.")
+        logger.warning(f"Image not found at path: {IMAGE_PATH}. Sending text only.")
         await update.message.reply_text(
             text=formatted_message,
             reply_markup=reply_markup
@@ -65,7 +68,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 def main() -> None:
     """Start the bot."""
-    token = os.environ.get("BOT_TOKEN")
+    token = os.getenv("BOT_TOKEN")
 
     if not token:
         logger.error("No BOT_TOKEN found in environment variables!")
